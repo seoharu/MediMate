@@ -1,5 +1,5 @@
-# SWAI: 실시간 음성 요약 파이프라인
-
+# MediMate
+sw ai경진대회 project-MediMate
 Clova Speech Recognition(gRPC)를 사용해 마이크 입력을 실시간으로 텍스트로 변환하고,  
 OpenAI GPT와 KoBART를 통해 자연스럽게 요약하는 자동화 파이프라인입니다.
 
