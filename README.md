@@ -1,30 +1,44 @@
 # MediMate
 sw ai경진대회 project-MediMate
-Clova Speech Recognition(gRPC)를 사용해 마이크 입력을 실시간으로 텍스트로 변환하고,  
-OpenAI GPT와 KoBART를 통해 자연스럽게 요약하는 자동화 파이프라인입니다.
+🎙 음성 인식 기반 요약 파이프라인 (STT + GPT + KoT5)
+
+이 프로젝트는 마이크 음성을 실시간으로 받아 텍스트로 변환하고, GPT와 KoT5 모델을 이용해 요약하는 자동화 파이프라인입니다.
 
 ---
 
 ## 📁 프로젝트 구조
-
     swai/
-    ├── app.py                      # Flask API (옵션)
-    ├── csr_stream.py              # Clova gRPC 실시간 STT
-    ├── gpt_summarize.py           # OpenAI GPT 요약
-    ├── kobart_summary.py          # KoBART 기반 추가 요약
-    ├── run_pipeline.py            # 전체 파이프라인 실행 스크립트
-    ├── nest.proto                 # protobuf 정의 파일
-    ├── requirements.txt           # 필요한 패키지 목록
-    ├── .env                       # (개인 키 저장용, Git에 업로드 금지)
-    ├── .gitignore                 # Git 무시 목록
-    └── templates/
-        └── index.html             # 웹 인터페이스용 (선택)
+    ├── run_pipeline.py # 전체 파이프라인 실행 파일
+    ├── socket_stream.py # 마이크 실시간 입력 → 텍스트 저장
+    ├── gpt_summarize.py # GPT 기반 1차 요약
+    ├── kot5_summary.py # KoT5 기반 2차 정제 요약
+    ├── transcription_result.txt # 변환된 음성 텍스트 저장 파일
+    ├── summary_result.txt # 최종 요약 결과 저장 파일
+    ├── requirements.txt
+    └── .env # 비공개 환경 변수 (API Key 등)
 
 ---
 
-## 🚀 실행 방법
 
-### 1. 환경 설정
+## 🧩 주요 흐름 설명
+
+### 1. 음성 → 텍스트 (`socket_stream.py`)
+- 마이크 입력을 실시간으로 받아서 RTZR STT API를 통해 텍스트로 변환합니다.
+- 인식된 최종 텍스트를 `transcription_result.txt`에 저장합니다.
+- 발화 종료는 다음 조건 중 하나로 감지됩니다:
+  - 5초 이상 음성 없음 (자동)
+  - 사용자가 [Enter] 입력 (수동)
+
+### 2. 텍스트 → 요약 (`run_pipeline.py`)
+- 저장된 텍스트를 불러와 GPT로 1차 요약
+- KoT5로 정제하여 최종 요약 생성
+- 결과는 `summary_result.txt`에 저장
+
+---
+
+## 🛠️ 설치 및 실행
+
+### 1. 의존성 설치
 
 ```bash
 conda create -n venv python=3.10
