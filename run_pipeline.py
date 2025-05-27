@@ -1,33 +1,21 @@
-import time
-import threading
-import traceback
-import sys
-import asyncio
 import os
+from datetime import datetime
 
 from gpt_summarize import gpt_simplify_and_summarize
 from kot5_summary import refine_summary_kot5
 
-TRANSCRIPT_PATH = "transcription_result.txt"
-SUMMARY_PATH = "summary_result.txt"
+# === 저장 경로는 외부에서 전달받기 때문에, 여기서 직접 지정하지 않음 ===
 
-# socket_stream.py의 마이크 + STT 실행 함수
-from socket_stream import streaming_transcribe_mic, RTZROpenAPIClient, CLIENT_ID, CLIENT_SECRET
-
-def run_pipeline(capture_duration=30):
-    print("실시간 STT 시작 - 마이크 입력 대기 중..")
-    client = RTZROpenAPIClient(CLIENT_ID, CLIENT_SECRET)
-    asyncio.run(streaming_transcribe_mic(client))  # 마이크 → 텍스트 저장
-
-    if not os.path.exists(TRANSCRIPT_PATH):
-        print("인식된 텍스트 파일이 존재하지 않습니다.")
+def summarize_saved_transcript(transcript_path: str):
+    if not os.path.exists(transcript_path):
+        print(f"텍스트 파일이 존재하지 않습니다: {transcript_path}")
         return
 
-    with open(TRANSCRIPT_PATH, "r", encoding="utf-8") as f:
+    with open(transcript_path, "r", encoding="utf-8") as f:
         raw = f.read().strip()
 
     if not raw or len(raw.split()) < 5:
-        print("\n인식된 텍스트가 너무 짧아 요약을 생략합니다.")
+        print("텍스트가 너무 짧아 요약을 생략합니다.")
         return
 
     print("\n인식된 전체 텍스트:\n")
@@ -43,16 +31,14 @@ def run_pipeline(capture_duration=30):
         print("\n최종 요약 결과:\n")
         print(final)
 
-        with open(SUMMARY_PATH, "w", encoding="utf-8") as f:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        summary_path = os.path.join("result", f"summary_{timestamp}.txt")
+
+        with open(summary_path, "w", encoding="utf-8") as f:
             f.write(final + "\n")
 
-    except Exception:
-        print("요약 단계에서 오류 발생")
-        traceback.print_exc()
+        print(f"\n요약 저장 완료 → {summary_path}")
 
-if __name__ == "__main__":
-    try:
-        run_pipeline()
-    except Exception:
-        traceback.print_exc()
-        input("엔터를 누르면 종료합니다...")
+    except Exception as e:
+        print("요약 중 오류 발생:")
+        print(str(e))

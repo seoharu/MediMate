@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import time
+from datetime import datetime
 from io import DEFAULT_BUFFER_SIZE
 from urllib.parse import urlencode
 
@@ -11,6 +12,8 @@ import requests
 import sounddevice as sd
 import websockets
 from dotenv import load_dotenv
+
+from run_pipeline import summarize_saved_transcript  # 요약 함수 직접 가져옴
 
 # === 환경변수 로드 ===
 load_dotenv()
@@ -28,10 +31,12 @@ BLOCK_SIZE = 1024
 CHANNELS = 1
 DTYPE = 'int16'
 
-TRANSCRIPT_PATH = "transcription_result.txt"
+TRANSCRIPT_PATH = os.path.join("result", "transcription_result.txt")
+os.makedirs(os.path.dirname(TRANSCRIPT_PATH), exist_ok=True)
 buffer = []
 last_result_time = time.time()
 END_TIMEOUT = 5  # 초 (무응답 간격 기준)
+should_prompt = False
 
 # === 인증 토큰 관리 클래스 ===
 class RTZROpenAPIClient:
@@ -53,16 +58,28 @@ class RTZROpenAPIClient:
             self._token = resp.json()
         return self._token["access_token"]
 
-# === 텍스트 저장 함수 ===
+
+# === 텍스트 저장 + 요약 실행 함수 ===
 def save_transcript():
+    global last_result_time
     full_text = " ".join(buffer).strip()
     if not full_text:
         print("저장할 텍스트가 없습니다.")
         return
-    with open(TRANSCRIPT_PATH, "w", encoding="utf-8") as f:
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = os.path.join("result", f"transcription_{timestamp}.txt")
+
+    with open(filename, "w", encoding="utf-8") as f:
         f.write(full_text + "\n")
-    print(f"\n텍스트 저장 완료 → {TRANSCRIPT_PATH}")
+
+    print(f"\n텍스트 저장 완료 → {filename}")
     buffer.clear()
+    last_result_time = time.time()
+
+    # 바로 요약 실행
+    summarize_saved_transcript(filename)
+
 
 # === 실시간 마이크 입력 → WebSocket 전송 ===
 async def streaming_transcribe_mic(client: RTZROpenAPIClient):
@@ -119,21 +136,34 @@ async def streaming_transcribe_mic(client: RTZROpenAPIClient):
                     print("중간:", res["alternatives"][0]["text"])
 
         async def watcher():
+            global last_result_time, should_prompt
             while True:
                 await asyncio.sleep(1)
                 if buffer and (time.time() - last_result_time) > END_TIMEOUT:
                     print("\n발화 종료 감지 (무응답 5초)")
-                    save_transcript()
+                    should_prompt = True
 
         async def key_listener():
+            global should_prompt
             loop = asyncio.get_running_loop()
             while True:
-                await loop.run_in_executor(None, input, "\n[Enter]를 누르면 수동 저장\n")
-                if buffer:
-                    print("\nEnter 감지 → 텍스트 저장")
+                await loop.run_in_executor(None, input, "\n[Enter]를 누르면 텍스트 저장\n")
+                if buffer and should_prompt:
+                    print("\nEnter 감지 + 무응답 상태 → 텍스트 저장")
                     save_transcript()
+                    should_prompt = False
+                    print("요약 완료. 프로그램을 종료합니다.")
+                    # 코루틴 전체 종료
+                    for task in asyncio.all_tasks():
+                        task.cancel()
+                    break
+                else:
+                    print("\n아직 발화 중입니다. 계속 인식 중...")
 
-        await asyncio.gather(sender(), receiver(), watcher(), key_listener())
+        try:
+            await asyncio.gather(sender(), receiver(), watcher(), key_listener())
+        except asyncio.CancelledError:
+            print("모든 코루틴이 종료되었습니다.")
 
 # === 외부에서 불러서 실행할 수 있도록 함수로 래핑 ===
 def stream_and_save_transcript():
