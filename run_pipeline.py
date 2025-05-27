@@ -43,12 +43,12 @@ def summarize_saved_transcript(transcript_path: str):
         print("\n최종 요약 결과:\n")
         print(final)
 
-        summary_path = os.path.join("result", f"summary_{timestamp}.txt")
+        summary_path = os.path.join("result", f"final_summary_{timestamp}.txt")
 
         with open(summary_path, "w", encoding="utf-8") as f:
             f.write(final + "\n")
 
-        print(f"\n요약 저장 완료 → {summary_path}")
+        print(f"\n최종 요약 저장 완료 → {summary_path}")
 
     except Exception as e:
         print("요약 중 오류 발생:")
