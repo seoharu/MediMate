@@ -2,14 +2,21 @@
 sw ai경진대회 project-MediMate
 🎙 음성 인식 기반 요약 파이프라인 (STT + GPT + KoT5)
 
-이 프로젝트는 마이크 음성을 실시간으로 받아 텍스트로 변환하고, GPT와 KoT5 모델을 이용해 요약하는 자동화 파이프라인입니다.
+이 프로젝트는 실시간 음성 인식을 통해 마이크 입력을 받아 텍스트로 변환하고,  
+변환된 텍스트를 **GPT 모델을 이용해 요약**,  
+그 후 **KoT5 모델로 정제 요약**까지 자동으로 수행하는 파이프라인입니다.
+
+최종 요약 결과는 `result/` 폴더에 자동 저장됩니다.
 
 ---
 
 ## 📁 프로젝트 구조
     swai/
-    ├── run_pipeline.py # 전체 파이프라인 실행 파일
-    ├── socket_stream.py # 마이크 실시간 입력 → 텍스트 저장
+    ├── result/
+    │ ├── transcription_YYYYMMDD_HHMMSS.txt # 음성 인식 텍스트 결과
+    │ └── summary_YYYYMMDD_HHMMSS.txt # 최종 요약 결과
+    ├── run_pipeline.py # 요약 함수 정의 (GPT → KoT5)
+    ├── socket_stream.py # 실시간 음성 인식 + 요약 트리거
     ├── gpt_summarize.py # GPT 기반 1차 요약
     ├── kot5_summary.py # KoT5 기반 2차 정제 요약
     ├── transcription_result.txt # 변환된 음성 텍스트 저장 파일
@@ -59,4 +66,4 @@ OPENAI_API_KEY=your-openai-key
 
 ### 3. 실행 
 '''bash
-python run_pipeline.py
+python socket_stream.py
