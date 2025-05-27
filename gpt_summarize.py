@@ -24,3 +24,11 @@ def gpt_simplify_and_summarize(raw_text: str) -> str:
     )
 
     return response.choices[0].message.content.strip()
+
+if __name__ == "__main__":
+    test_text = (
+        "인공지능 기술이 급격하게 발전하면서 다양한 산업 분야에 활용되고 있으며, "
+        "자연어 처리 기술 중에서도 특히 문서 요약에 대한 수요가 증가하고 있다. "
+        "본 연구에서는 한국어 요약 모델을 활용해 실험을 진행하였다."
+    )
+    print(gpt_simplify_and_summarize(test_text))
