@@ -1,17 +1,27 @@
-from flask import Flask, request, render_template
-from gpt_summarize import gpt_simplify_and_summarize
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from socket_stream import stream_and_save_transcript
+from run_pipeline import summarize_saved_transcript
 
-app = Flask(__name__)
+app = FastAPI()
 
-@app.route("/", methods=["GET"])
-def index():
-    return render_template("index.html")
+# CORS 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 개발 중 전체 허용
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.route("/summarize", methods=["POST"])
-def summarize():
-    raw_text = request.form.get("text")
-    summary = gpt_simplify_and_summarize(raw_text)
-    return render_template("index.html", summary=summary)
+@app.post("/start-summary")
+async def start_summary(request: Request):
+    data = await request.json()
+    custom_id = data.get["custom_id"]
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    # 핵심 함수 호출 (stream -> 요약 -> 저장)
+    try:
+        stream_and_save_transcript(custom_id)
+        return {"message": "녹음 및 요약 완료"}
+    except Exception as e:
+        return {"error": str(e)}

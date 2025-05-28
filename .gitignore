@@ -45,3 +45,4 @@ ENV/
 scratch.py
 
 result/
+secrets/

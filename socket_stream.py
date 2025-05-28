@@ -60,7 +60,7 @@ class RTZROpenAPIClient:
 
 
 # === 텍스트 저장 + 요약 실행 함수 ===
-def save_transcript():
+def save_transcript(custom_id="anonymous"):
     global last_result_time
     full_text = " ".join(buffer).strip()
     if not full_text:
@@ -78,11 +78,11 @@ def save_transcript():
     last_result_time = time.time()
 
     # 바로 요약 실행
-    summarize_saved_transcript(filename)
+    summarize_saved_transcript(filename, custom_id)
 
 
 # === 실시간 마이크 입력 → WebSocket 전송 ===
-async def streaming_transcribe_mic(client: RTZROpenAPIClient):
+async def streaming_transcribe_mic(client: RTZROpenAPIClient, custom_id: str = "anonymous"):
     token = client.token
     config = dict(
         sample_rate=str(SAMPLE_RATE),
@@ -166,13 +166,13 @@ async def streaming_transcribe_mic(client: RTZROpenAPIClient):
             print("모든 코루틴이 종료되었습니다.")
 
 # === 외부에서 불러서 실행할 수 있도록 함수로 래핑 ===
-def stream_and_save_transcript():
+def stream_and_save_transcript(custom_id="anonymous"):
     client = RTZROpenAPIClient(CLIENT_ID, CLIENT_SECRET)
-    asyncio.run(streaming_transcribe_mic(client))
+    asyncio.run(streaming_transcribe_mic(client, custom_id))
 
 
 # === 실행부 ===
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     print("실시간 음성 인식을 시작합니다...")
-    stream_and_save_transcript()
+    stream_and_save_transcript(custom_id="anonymous")
