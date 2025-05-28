@@ -176,3 +176,5 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     print("실시간 음성 인식을 시작합니다...")
     stream_and_save_transcript(custom_id="anonymous")
+    client = RTZROpenAPIClient(CLIENT_ID, CLIENT_SECRET)
+    asyncio.run(streaming_transcribe_mic(client))
