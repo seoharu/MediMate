@@ -31,13 +31,13 @@ def save_to_firebase(custom_id: str, summary_type: str, content: str):
     date_str = datetime.now().strftime("%Y-%m-%d")
     doc_id = f"{custom_id}_{date_str}_{summary_type}"
 
-    db.collection("summaries").document(doc_id).set({
+    db.collection("clinicRecords").document(doc_id).set({
         "type": summary_type,
         "timestamp": date_str,
         "content": content,
         "custom_id": custom_id
     })
-    print(f"[Firestore] 저장 완료 -> ID: {doc_id}")
+    print(f"[Firestore] 저장 완료 -> clinicRecords/{custom_id}/visits/{doc_id}")
 
 def summarize_saved_transcript(transcript_path: str, custom_id: str):
     if not os.path.exists(transcript_path):

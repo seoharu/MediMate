@@ -6,6 +6,7 @@ astunparse==1.6.3
 atomicwrites==1.4.0
 beautifulsoup4==4.12.2
 boto3
+uvicorn[standard]
 CacheControl==0.14.1
 Cython==3.0.11
 eval_type_backport==0.2.0
